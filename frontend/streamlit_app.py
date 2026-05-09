@@ -306,29 +306,70 @@ if analyze:
 
         with st.spinner("Running AI Analysis..."):
 
-            response = requests.post(
-                "http://127.0.0.1:8000/analyze",
-                files={
-                    "resume": (
-                        uploaded_file.name,
-                        uploaded_file.getvalue(),
-                        "application/pdf"
+            try:
+
+                response = requests.post(
+                    "http://127.0.0.1:8000/analyze",
+                    files={
+                        "resume": (
+                            uploaded_file.name,
+                            uploaded_file.getvalue(),
+                            "application/pdf"
+                        )
+                    },
+                    data={
+                        "job_description": job_description
+                    }
+                )
+
+                if response.status_code != 200:
+
+                    st.error(
+                        f"Backend Error: {response.status_code}"
                     )
-                },
-                data={
-                    "job_description": job_description
-                }
-            )
 
-            result = response.json()
+                    try:
 
-            ats_score = result["ATS Score"]
+                        error_data = response.json()
 
-            matched_skills = result["Resume Skills"]
+                        if "error" in error_data:
 
-            missing_skills = result["Missing Skills"]
+                            st.error(error_data["error"])
 
-            resume_strength = result["Resume Strength"]
+                    except Exception:
+
+                        st.error("Unknown backend error.")
+
+                    st.stop()
+
+                result = response.json()
+                ats_score = result["ATS Score"]
+
+                resume_strength = result["Resume Strength"]
+
+                matched_skills = result["Matched Skills"]
+
+                missing_skills = result["Missing Skills"]
+
+                if "error" in result:
+
+                    st.error(result["error"])
+
+                    st.stop()
+
+            except requests.exceptions.ConnectionError:
+
+                st.error(
+                    "Backend server is not running on port 8000."
+                )
+
+                st.stop()
+
+            except Exception as e:
+
+                st.error(f"Unexpected Error: {str(e)}")
+
+                st.stop()
 
             # -------------------------------------------------
             # DASHBOARD METRICS
@@ -470,88 +511,39 @@ if analyze:
             st.markdown("<br>", unsafe_allow_html=True)
 
             # -------------------------------------------------
-            # RECRUITER INSIGHT
+            # SKILL MATCH ANALYSIS
             # -------------------------------------------------
 
-            st.markdown("## Recruiter Insight")
+            skill_scores = {}
 
-            skill_scores = {
-                "Python": 95,
-                "Machine Learning": 88,
-                "Deep Learning": 82,
-                "NLP": 80,
-                "Docker": 35,
-                "FastAPI": 40,
-                "SQL": 45
-            }
+            for skill in matched_skills:
+
+                skill_scores[skill] = 90
+
+            for skill in missing_skills:
+
+                if skill not in skill_scores:
+
+                    skill_scores[skill] = 35
+
+            st.markdown("## Skill Match Analysis")
 
             for skill, score in skill_scores.items():
 
-                progress_html = f"""
-                <div style="margin-bottom:20px;">
-
-                    <div style="
-                        margin-bottom:8px;
-                        font-size:15px;
-                        font-weight:600;
-                        color:white;
-                    ">
-                        {skill} — {score}%
-                    </div>
-
-                    <div style="
-                        width:100%;
-                        height:14px;
-                        border-radius:999px;
-                        background:rgba(255,255,255,0.08);
-                        overflow:hidden;
-                    ">
-
-                        <div style="
-                            width:{score}%;
-                            height:100%;
-                            border-radius:999px;
-                            background:
-                            linear-gradient(
-                                90deg,
-                                #8b5cf6,
-                                #3b82f6
-                            );
-                        ">
-                        </div>
-
-                    </div>
-
-                </div>
-                """
-
                 st.markdown(
-                    progress_html,
-                    unsafe_allow_html=True
+                    f"### {skill} — {score}%"
                 )
 
-            st.markdown("<br>", unsafe_allow_html=True)
+                st.progress(score / 100)
 
             # -------------------------------------------------
             # RECRUITER INSIGHT
             # -------------------------------------------------
 
-            st.markdown("## Recruiter Insight")
+            st.markdown("## AI Recruiter Insight")
 
             st.info(
-                '''
-                Your resume demonstrates strong AI, NLP,
-                and machine learning alignment.
-
-                However, production-oriented engineering
-                skills such as Docker, FastAPI,
-                and SQL remain underrepresented.
-
-                Adding deployment-focused projects,
-                scalable backend systems,
-                and cloud-native AI applications
-                would significantly improve recruiter confidence.
-                '''
+                result["Recruiter Insight"]
             )
 
             st.markdown("<br>", unsafe_allow_html=True)
