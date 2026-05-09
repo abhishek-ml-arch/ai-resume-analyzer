@@ -1,55 +1,32 @@
 SKILLS = [
+    # Languages
+    "python", "java", "javascript", "typescript", "r", "c++", "c#", "go", "rust", "scala",
 
-    # Programming
-    "python",
-    "java",
-    "javascript",
-    "typescript",
-    "c++",
-    "sql",
+    # ML / AI
+    "machine learning", "deep learning", "nlp", "computer vision", "reinforcement learning",
+    "mlops", "langchain", "huggingface", "llm", "transformers", "xgboost", "random forest",
 
-    # AI / ML
-    "machine learning",
-    "deep learning",
-    "nlp",
-    "computer vision",
-    "llm",
-    "langchain",
+    # Frameworks / Libraries
+    "tensorflow", "pytorch", "keras", "scikit-learn", "pandas", "numpy", "opencv",
+    "fastapi", "flask", "django", "react", "streamlit",
 
-    # Data
-    "pandas",
-    "numpy",
-    "scikit-learn",
-    "tensorflow",
-    "pytorch",
+    # Data & Databases
+    "sql", "postgresql", "mongodb", "redis", "mysql", "sqlite", "hadoop", "spark",
+    "data analysis", "data visualization", "tableau", "power bi", "excel",
 
-    # Backend
-    "fastapi",
-    "flask",
-    "django",
-
-    # DevOps
-    "docker",
-    "kubernetes",
-    "ci/cd",
-
-    # Cloud
-    "aws",
-    "azure",
-    "gcp",
-
-    # Databases
-    "mongodb",
-    "postgresql",
-    "mysql",
-
-    # Analytics
-    "power bi",
-    "tableau",
-    "excel",
-
-    # Other
-    "git",
-    "linux",
-    "api"
+    # Cloud & DevOps
+    "aws", "azure", "gcp", "docker", "kubernetes", "ci/cd", "linux", "git",
+    "airflow", "celery",
 ]
+
+# ATS Score thresholds
+STRENGTH_THRESHOLDS = {
+    "Excellent": 85,
+    "Strong": 70,
+    "Average": 50,
+}
+
+# File validation
+MAX_FILE_SIZE_MB = 5
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+ALLOWED_CONTENT_TYPE = "application/pdf"

@@ -4,10 +4,8 @@ sentence-transformers
 scikit-learn
 pymupdf
 python-multipart
-streamlit
-spacy
 numpy
-pandas
+streamlit
 requests
 plotly
-spacy   
+pandas

@@ -1,15 +1,15 @@
 #!/usr/bin/env fish
 
-cd ~/Documents/"AI Resume Analyzer"
+cd (dirname (status filename))
 
 source venv/bin/activate.fish
 
-# Backend
+# Start backend
 cd backend
 uvicorn app:app --reload &
 
 sleep 5
 
-# Frontend
+# Start frontend
 cd ../frontend
 streamlit run streamlit_app.py

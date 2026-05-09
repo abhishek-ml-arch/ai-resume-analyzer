@@ -252,6 +252,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 # -------------------------------------------------
 # INPUTS
 # -------------------------------------------------
@@ -259,25 +260,13 @@ st.markdown(
 left, right = st.columns(2)
 
 with left:
-
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader(
-        "Upload Resume PDF",
-        type=["pdf"]
-    )
-
+    uploaded_file = st.file_uploader("Upload Resume PDF", type=["pdf"])
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
-
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
-
-    job_description = st.text_area(
-        "Paste Job Description",
-        height=180
-    )
-
+    job_description = st.text_area("Paste Job Description", height=180)
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -295,11 +284,9 @@ analyze = st.button("Analyze Resume")
 if analyze:
 
     if uploaded_file is None:
-
         st.error("Please upload a resume PDF")
 
     elif not job_description.strip():
-
         st.error("Please paste a job description")
 
     else:
@@ -307,7 +294,6 @@ if analyze:
         with st.spinner("Running AI Analysis..."):
 
             try:
-
                 response = requests.post(
                     "http://127.0.0.1:8000/analyze",
                     files={
@@ -317,59 +303,32 @@ if analyze:
                             "application/pdf"
                         )
                     },
-                    data={
-                        "job_description": job_description
-                    }
+                    data={"job_description": job_description}
                 )
 
+                # Check HTTP status before parsing
                 if response.status_code != 200:
-
-                    st.error(
-                        f"Backend Error: {response.status_code}"
-                    )
-
-                    try:
-
-                        error_data = response.json()
-
-                        if "error" in error_data:
-
-                            st.error(error_data["error"])
-
-                    except Exception:
-
-                        st.error("Unknown backend error.")
-
+                    st.error(f"Backend error ({response.status_code}): {response.json().get('error', 'Unknown error')}")
                     st.stop()
 
                 result = response.json()
-                ats_score = result["ATS Score"]
 
-                resume_strength = result["Resume Strength"]
-
-                matched_skills = result["Matched Skills"]
-
-                missing_skills = result["Missing Skills"]
-
+                # Check for application-level errors
                 if "error" in result:
-
-                    st.error(result["error"])
-
+                    st.error(f"Analysis failed: {result['error']}")
                     st.stop()
 
             except requests.exceptions.ConnectionError:
-
-                st.error(
-                    "Backend server is not running on port 8000."
-                )
-
+                st.error("Cannot connect to backend. Make sure the FastAPI server is running on port 8000.")
                 st.stop()
-
             except Exception as e:
-
-                st.error(f"Unexpected Error: {str(e)}")
-
+                st.error(f"Unexpected error: {str(e)}")
                 st.stop()
+
+            ats_score      = round(float(result["ATS Score"]), 1)
+            matched_skills = result["Resume Skills"]
+            missing_skills = result["Missing Skills"]
+            resume_strength = result["Resume Strength"]
 
             # -------------------------------------------------
             # DASHBOARD METRICS
@@ -380,16 +339,14 @@ if analyze:
             m1, m2, m3, m4 = st.columns(4)
 
             with m1:
-
                 st.markdown(f"""
                 <div class='metric-card'>
                     <div class='metric-label'>ATS SCORE</div>
-                    <div class='metric-value'>{ats_score}%</div>
+                    <div class='metric-value'>{ats_score:.1f}%</div>
                 </div>
                 """, unsafe_allow_html=True)
 
             with m2:
-
                 st.markdown(f"""
                 <div class='metric-card'>
                     <div class='metric-label'>RESUME STRENGTH</div>
@@ -398,7 +355,6 @@ if analyze:
                 """, unsafe_allow_html=True)
 
             with m3:
-
                 st.markdown(f"""
                 <div class='metric-card'>
                     <div class='metric-label'>MATCHED SKILLS</div>
@@ -407,7 +363,6 @@ if analyze:
                 """, unsafe_allow_html=True)
 
             with m4:
-
                 st.markdown(f"""
                 <div class='metric-card'>
                     <div class='metric-label'>MISSING SKILLS</div>
@@ -424,7 +379,6 @@ if analyze:
             c1, c2 = st.columns(2)
 
             with c1:
-
                 gauge = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=ats_score,
@@ -433,51 +387,26 @@ if analyze:
                         'axis': {'range': [0, 100]},
                         'bar': {'color': '#8b5cf6'},
                         'steps': [
-                            {'range': [0, 50], 'color': '#ef4444'},
+                            {'range': [0, 50],  'color': '#ef4444'},
                             {'range': [50, 75], 'color': '#f59e0b'},
-                            {'range': [75, 100], 'color': '#22c55e'}
+                            {'range': [75, 100],'color': '#22c55e'}
                         ]
                     }
                 ))
-
-                gauge.update_layout(
-                    paper_bgcolor="#020617",
-                    font={'color': 'white'}
-                )
-
-                st.plotly_chart(
-                    gauge,
-                    use_container_width=True
-                )
+                gauge.update_layout(paper_bgcolor="#020617", font={'color': 'white'})
+                st.plotly_chart(gauge, use_container_width=True)
 
             with c2:
-
                 pie_df = pd.DataFrame({
                     "Category": ["Matched", "Missing"],
-                    "Count": [
-                        len(matched_skills),
-                        len(missing_skills)
-                    ]
+                    "Count": [len(matched_skills), len(missing_skills)]
                 })
-
-                fig = px.pie(
-                    pie_df,
-                    names="Category",
-                    values="Count",
-                    hole=0.55
-                )
-
-                fig.update_layout(
-                    paper_bgcolor="#020617",
-                    font={'color': 'white'}
-                )
-
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True
-                )
+                fig = px.pie(pie_df, names="Category", values="Count", hole=0.55)
+                fig.update_layout(paper_bgcolor="#020617", font={'color': 'white'})
+                st.plotly_chart(fig, use_container_width=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
+
             # -------------------------------------------------
             # SKILLS OVERVIEW
             # -------------------------------------------------
@@ -487,64 +416,75 @@ if analyze:
             s1, s2 = st.columns(2)
 
             with s1:
-
-                st.markdown("### Matched Skills")
-
-                for skill in matched_skills:
-
-                    st.markdown(
-                        f"<span class='pill'>{skill}</span>",
-                        unsafe_allow_html=True
-                    )
+                st.markdown("### ✅ Matched Skills")
+                if matched_skills:
+                    for skill in matched_skills:
+                        st.markdown(f"<span class='pill'>{skill}</span>", unsafe_allow_html=True)
+                else:
+                    st.markdown("_No matching skills found._")
 
             with s2:
-
-                st.markdown("### Missing Skills")
-
-                for skill in missing_skills:
-
-                    st.markdown(
-                        f"<span class='pill'>{skill}</span>",
-                        unsafe_allow_html=True
-                    )
+                st.markdown("### ❌ Missing Skills")
+                if missing_skills:
+                    for skill in missing_skills:
+                        st.markdown(f"<span class='pill'>{skill}</span>", unsafe_allow_html=True)
+                else:
+                    st.markdown("_Great! No missing skills detected._")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
             # -------------------------------------------------
-            # SKILL MATCH ANALYSIS
+            # RECRUITER INSIGHT  (dynamic — from real results)
             # -------------------------------------------------
 
+            st.markdown("## Recruiter Insight")
+
+            # Build skill scores dynamically from actual results
             skill_scores = {}
-
             for skill in matched_skills:
-
                 skill_scores[skill] = 90
-
             for skill in missing_skills:
+                skill_scores[skill] = 20
 
-                if skill not in skill_scores:
+            if skill_scores:
+                for skill, score in skill_scores.items():
+                    progress_html = f"""
+                    <div style="margin-bottom:20px;">
+                        <div style="margin-bottom:8px;font-size:15px;font-weight:600;color:white;">
+                            {skill.title()} — {score}%
+                        </div>
+                        <div style="width:100%;height:14px;border-radius:999px;
+                                    background:rgba(255,255,255,0.08);overflow:hidden;">
+                            <div style="width:{score}%;height:100%;border-radius:999px;
+                                        background:linear-gradient(90deg,#8b5cf6,#3b82f6);">
+                            </div>
+                        </div>
+                    </div>
+                    """
+                    st.markdown(progress_html, unsafe_allow_html=True)
+            else:
+                st.info("No skills detected in either resume or job description.")
 
-                    skill_scores[skill] = 35
+            st.markdown("<br>", unsafe_allow_html=True)
 
-            st.markdown("## Skill Match Analysis")
+            # -------------------------------------------------
+            # AI SUMMARY  (dynamic — based on actual score)
+            # -------------------------------------------------
 
-            for skill, score in skill_scores.items():
+            st.markdown("## AI Summary")
 
-                st.markdown(
-                    f"### {skill} — {score}%"
+            if matched_skills and missing_skills:
+                matched_str = ", ".join(s.title() for s in matched_skills[:3])
+                missing_str = ", ".join(s.title() for s in missing_skills[:3])
+                st.info(
+                    f"Your resume shows strong alignment in: {matched_str}. "
+                    f"However, the following skills from the job description are missing: {missing_str}. "
+                    f"Consider adding relevant projects or experience to address these gaps."
                 )
-
-                st.progress(score / 100)
-
-            # -------------------------------------------------
-            # RECRUITER INSIGHT
-            # -------------------------------------------------
-
-            st.markdown("## AI Recruiter Insight")
-
-            st.info(
-                result["Recruiter Insight"]
-            )
+            elif matched_skills and not missing_skills:
+                st.success("Excellent! Your resume covers all the key skills mentioned in the job description.")
+            elif not matched_skills:
+                st.warning("No recognizable skills were detected. Make sure your resume clearly lists technical skills.")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -554,9 +494,11 @@ if analyze:
 
             st.markdown("## AI Recommendations")
 
-            for rec in result["Recommendations"]:
-
-                st.info(rec)
+            if result["Recommendations"]:
+                for rec in result["Recommendations"]:
+                    st.info(rec)
+            else:
+                st.success("No additional recommendations — your resume looks well-aligned!")
 
             # -------------------------------------------------
             # FINAL AI INSIGHT
@@ -565,21 +507,13 @@ if analyze:
             st.markdown("## Final AI Insight")
 
             if ats_score >= 80:
-
-                st.success(
-                    "Excellent alignment detected with the target role."
-                )
-
+                st.success("Excellent alignment detected with the target role.")
             elif ats_score >= 60:
-
                 st.warning(
                     "Good alignment detected, but stronger deployment "
                     "and backend engineering skills would improve the profile."
                 )
-
             else:
-
                 st.error(
-                    "Significant resume improvements are recommended "
-                    "for this role."
+                    "Significant resume improvements are recommended for this role."
                 )

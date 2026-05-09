@@ -1,184 +1,61 @@
-from fastapi import FastAPI
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Form
-
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
-
-from analyzer import (
-    extract_skills,
-    calculate_similarity,
-    generate_recruiter_insight
-)
-
+from analyzer import analyze_resume
 from utils import extract_text_from_pdf
+from config import MAX_FILE_SIZE_BYTES, ALLOWED_CONTENT_TYPE
 
-app = FastAPI()
+app = FastAPI(title="AI Resume Analyzer API")
 
 
 @app.get("/")
-def home():
+async def root():
+    return {"message": "AI Resume Analyzer Backend Running"}
 
-    return {
-        "message": "AI Resume Analyzer Backend Running"
-    }
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 @app.post("/analyze")
-async def analyze_resume(
-
+async def analyze(
     resume: UploadFile = File(...),
-
-    job_description: str = Form(...)
-
+    job_description: str = Form(...),
 ):
-
     try:
-
-        # -------------------------------------------------
-        # FILE VALIDATION
-        # -------------------------------------------------
-
-        if resume.content_type != "application/pdf":
-
+        # --- Validation ---
+        if resume.content_type != ALLOWED_CONTENT_TYPE:
             return JSONResponse(
                 status_code=400,
-                content={
-                    "error": "Only PDF resumes are allowed."
-                }
+                content={"error": "Only PDF files are accepted."}
             )
 
         pdf_bytes = await resume.read()
 
-        if len(pdf_bytes) > 5 * 1024 * 1024:
-
+        if len(pdf_bytes) > MAX_FILE_SIZE_BYTES:
             return JSONResponse(
                 status_code=400,
-                content={
-                    "error": "PDF size exceeds 5MB limit."
-                }
+                content={"error": "File too large. Maximum size is 5MB."}
             )
 
-        # -------------------------------------------------
-        # EXTRACT TEXT
-        # -------------------------------------------------
-
-        resume_text = extract_text_from_pdf(
-            pdf_bytes
-        )
-
-        if not resume_text:
-
+        if not job_description.strip():
             return JSONResponse(
                 status_code=400,
-                content={
-                    "error": "No text found inside PDF."
-                }
+                content={"error": "Job description cannot be empty."}
             )
 
-        # -------------------------------------------------
-        # SKILL EXTRACTION
-        # -------------------------------------------------
+        # --- Processing ---
+        resume_text = extract_text_from_pdf(pdf_bytes)
+        result = analyze_resume(resume_text, job_description)
 
-        resume_skills = extract_skills(
-            resume_text
-        )
+        # Propagate analysis-level errors
+        if "error" in result:
+            return JSONResponse(status_code=422, content=result)
 
-        jd_skills = extract_skills(
-            job_description
-        )
-
-        matched_skills = list(
-            set(resume_skills).intersection(
-                set(jd_skills)
-            )
-        )
-
-        missing_skills = list(
-            set(jd_skills) - set(resume_skills)
-        )
-
-        # -------------------------------------------------
-        # ATS SCORE
-        # -------------------------------------------------
-
-        ats_score = calculate_similarity(
-            resume_text,
-            job_description
-        )
-
-        # -------------------------------------------------
-        # RESUME STRENGTH
-        # -------------------------------------------------
-
-        if ats_score >= 80:
-
-            resume_strength = "Strong"
-
-        elif ats_score >= 60:
-
-            resume_strength = "Average"
-
-        else:
-
-            resume_strength = "Weak"
-
-        # -------------------------------------------------
-        # RECOMMENDATIONS
-        # -------------------------------------------------
-
-        recommendations = []
-
-        for skill in missing_skills:
-
-            recommendations.append(
-                f"Consider adding projects or experience related to {skill.title()}."
-            )
-
-        if not recommendations:
-
-            recommendations.append(
-                "Excellent alignment detected for this role."
-            )
-
-        # -------------------------------------------------
-        # RECRUITER INSIGHT
-        # -------------------------------------------------
-
-        recruiter_insight = generate_recruiter_insight(
-            matched_skills,
-            missing_skills,
-            ats_score
-        )
-
-        # -------------------------------------------------
-        # RESPONSE
-        # -------------------------------------------------
-
-        return {
-
-            "ATS Score": ats_score,
-
-            "Resume Strength": resume_strength,
-
-            "Resume Skills": resume_skills,
-
-            "Job Description Skills": jd_skills,
-
-            "Matched Skills": matched_skills,
-
-            "Missing Skills": missing_skills,
-
-            "Recommendations": recommendations,
-
-            "Recruiter Insight": recruiter_insight
-        }
+        return result
 
     except Exception as e:
-
         return JSONResponse(
             status_code=500,
-            content={
-                "error": str(e)
-            }
+            content={"error": f"Internal server error: {str(e)}"}
         )
