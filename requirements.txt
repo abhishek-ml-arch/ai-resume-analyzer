@@ -9,3 +9,5 @@ spacy
 numpy
 pandas
 requests
+plotly
+spacy
