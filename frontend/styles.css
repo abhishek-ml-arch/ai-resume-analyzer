@@ -1,0 +1,902 @@
+/* ═══════════════════════════════════════════════════════════════
+   AI Resume Analyzer — Design system (dark monochrome, enterprise)
+   Scope: classes prefixed with saas- + Streamlit data-testid hooks
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --saas-bg-base: #09090b;
+  --saas-bg-surface: #0f0f12;
+  --saas-bg-raised: #18181c;
+  --saas-bg-glass: rgba(24, 24, 28, 0.72);
+  --saas-border: rgba(255, 255, 255, 0.06);
+  --saas-border-strong: rgba(255, 255, 255, 0.1);
+  --saas-text: #fafafa;
+  --saas-text-secondary: rgba(250, 250, 250, 0.62);
+  --saas-text-muted: rgba(250, 250, 250, 0.38);
+  --saas-text-faint: rgba(250, 250, 250, 0.22);
+  --saas-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.45);
+  --saas-radius-lg: 16px;
+  --saas-radius-md: 12px;
+  --saas-radius-sm: 10px;
+  --saas-font: "Inter", system-ui, -apple-system, sans-serif;
+  --saas-positive: #86efac;
+  --saas-positive-bg: rgba(34, 197, 94, 0.1);
+  --saas-warning: #fde68a;
+  --saas-warning-bg: rgba(245, 158, 11, 0.1);
+  --saas-negative: #fca5a5;
+  --saas-negative-bg: rgba(239, 68, 68, 0.1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, [class*="css"] {
+  font-family: var(--saas-font) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── App shell ─────────────────────────────────────────────── */
+.stApp {
+  background: var(--saas-bg-base);
+  color: var(--saas-text);
+  min-height: 100vh;
+}
+
+.stApp::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.04), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 255, 255, 0.02), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-testid="stAppViewContainer"],
+[data-testid="stMainBlockContainer"] {
+  position: relative;
+  z-index: 1;
+}
+
+header[data-testid="stHeader"] {
+  display: none !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+[data-testid="stMainBlockContainer"] .block-container {
+  max-width: 1080px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  padding-top: 1rem !important;
+  padding-bottom: 2.5rem !important;
+  background-color: transparent !important;
+}
+
+@media (max-width: 768px) {
+  [data-testid="stMainBlockContainer"] .block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+}
+
+/* Column rows: prevent flex overflow + stable gutters */
+[data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
+  gap: 0.75rem !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+[data-testid="stMainBlockContainer"] [data-testid="column"] {
+  min-width: 0 !important;
+}
+
+/* Plotly: fixed-size card with controlled overflow */
+[data-testid="stMainBlockContainer"] [data-testid="stPlotlyChart"] {
+  border-radius: var(--saas-radius-md);
+  border: 1px solid var(--saas-border);
+  background: var(--saas-bg-raised);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.5rem 0.25rem;
+  box-sizing: border-box;
+  width: 100% !important;
+  min-height: 0;
+  max-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-testid="stMainBlockContainer"] [data-testid="stPlotlyChart"] .js-plotly-plot,
+[data-testid="stMainBlockContainer"] [data-testid="stPlotlyChart"] .plotly {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Prevent Plotly SVG from exceeding card */
+[data-testid="stMainBlockContainer"] [data-testid="stPlotlyChart"] svg {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* ─── Sidebar (scoped) ────────────────────────────────────── */
+section[data-testid="stSidebar"] {
+  background: var(--saas-bg-glass) !important;
+  border-right: 1px solid var(--saas-border) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+  padding: 1.25rem 0.75rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.sb-brand {
+  margin-bottom: 1.75rem;
+  padding: 0 0.35rem;
+}
+
+/* Sidebar nav buttons — scoped to sidebar only (Streamlit DOM varies by version) */
+section[data-testid="stSidebar"] [data-testid="stButton"] > button,
+section[data-testid="stSidebar"] [data-testid="stButton"] button {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--saas-radius-sm);
+  border: 1px solid transparent;
+  background: transparent !important;
+  color: var(--saas-text-muted) !important;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--saas-font);
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  box-shadow: none !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stButton"] > button:hover,
+section[data-testid="stSidebar"] [data-testid="stButton"] button:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--saas-text-secondary) !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stButton"] > button[kind="primary"],
+section[data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"] {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: var(--saas-border) !important;
+  color: var(--saas-text) !important;
+}
+
+.sb-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--saas-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.35rem;
+}
+
+.sb-wordmark {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--saas-text);
+}
+
+.sb-wordmark .wl {
+  font-weight: 400;
+  color: var(--saas-text-muted);
+}
+
+.sb-divider {
+  border: none;
+  border-top: 1px solid var(--saas-border);
+  margin: 1.25rem 0.35rem;
+}
+
+.sb-footer {
+  padding: 0 0.35rem;
+}
+
+.sb-tagline {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--saas-text-faint);
+}
+
+/* ─── Page chrome ───────────────────────────────────────────── */
+.saas-hero {
+  margin-bottom: 1.75rem;
+}
+
+.saas-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--saas-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--saas-border);
+  margin-bottom: 0.75rem;
+}
+
+.saas-hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--saas-text-muted);
+}
+
+.saas-hero-title {
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--saas-text);
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+}
+
+.saas-hero-title em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--saas-text-secondary);
+}
+
+.saas-hero-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--saas-text-muted);
+  max-width: 36rem;
+  margin: 0;
+}
+
+.saas-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.saas-hero-meta span {
+  font-size: 12px;
+  color: var(--saas-text-muted);
+}
+
+.saas-page-head {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--saas-border);
+}
+
+.saas-page-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--saas-text);
+  margin: 0 0 0.25rem;
+}
+
+.saas-page-desc {
+  font-size: 13px;
+  color: var(--saas-text-muted);
+  margin: 0;
+}
+
+.saas-dash-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--saas-text-faint);
+  margin: 0 0 0.5rem;
+  max-width: 40rem;
+}
+
+/* ─── Input cards ───────────────────────────────────────────── */
+.saas-card {
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  border-radius: var(--saas-radius-lg);
+  padding: 1.125rem 1.25rem;
+  box-shadow: var(--saas-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.saas-card:hover {
+  border-color: var(--saas-border-strong);
+}
+
+.saas-card-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.saas-card-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--saas-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--saas-border);
+  font-size: 14px;
+  color: var(--saas-text-secondary);
+}
+
+.saas-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--saas-text-muted);
+}
+
+.saas-card-hint {
+  font-size: 11px;
+  color: var(--saas-text-faint);
+  margin-top: 0.5rem;
+}
+
+/* Upload zone */
+.saas-upload-zone [data-testid="stFileUploader"] {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.saas-upload-zone [data-testid="stFileUploader"] section {
+  padding: 0 !important;
+}
+
+/* Streamlit ≥1.31 dropzone + legacy inner div */
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"],
+.saas-upload-zone [data-testid="stFileUploader"] > div {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px dashed var(--saas-border-strong) !important;
+  border-radius: var(--saas-radius-md) !important;
+  padding: 1.25rem 1rem !important;
+  transition: border-color 0.2s ease, background 0.2s ease !important;
+}
+
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"]:hover,
+.saas-upload-zone [data-testid="stFileUploader"] > div:hover {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] small,
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] span,
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] label,
+.saas-upload-zone [data-testid="stFileUploader"] > div span,
+.saas-upload-zone [data-testid="stFileUploader"] > div label,
+.saas-upload-zone [data-testid="stFileUploader"] > div p {
+  color: var(--saas-text-muted) !important;
+  font-size: 12px !important;
+}
+
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"] p {
+  color: var(--saas-text-muted) !important;
+}
+
+.saas-upload-zone [data-testid="stFileUploader"] [data-testid="stUploadSuccessFile"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--saas-border) !important;
+  border-radius: var(--saas-radius-sm) !important;
+}
+
+/* Textarea */
+.saas-jd-zone [data-testid="stTextArea"] {
+  width: 100% !important;
+}
+
+.saas-jd-zone [data-testid="stTextArea"] > div {
+  background: rgba(0, 0, 0, 0.22) !important;
+  border: 1px solid var(--saas-border) !important;
+  border-radius: var(--saas-radius-md) !important;
+  padding: 0 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.saas-jd-zone [data-testid="stTextArea"] > div:focus-within {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06) !important;
+}
+
+.saas-jd-zone [data-testid="stTextArea"] textarea {
+  background: transparent !important;
+  color: var(--saas-text) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  font-family: var(--saas-font) !important;
+  padding: 12px 14px !important;
+  min-height: 120px !important;
+  border: none !important;
+  caret-color: var(--saas-text);
+}
+
+.saas-jd-zone [data-testid="stTextArea"] textarea::placeholder {
+  color: var(--saas-text-faint) !important;
+}
+
+/* Primary CTA — main column only */
+.saas-cta-wrap {
+  max-width: 280px;
+  margin: 0.5rem 0 0;
+}
+
+.saas-cta-wrap [data-testid="stButton"] > button,
+.saas-cta-wrap [data-testid="stButton"] button {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--saas-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(180deg, #f4f4f5 0%, #e4e4e7 100%) !important;
+  color: #09090b !important;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--saas-font);
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.saas-cta-wrap [data-testid="stButton"] > button:hover,
+.saas-cta-wrap [data-testid="stButton"] button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 12px 28px rgba(0, 0, 0, 0.4) !important;
+}
+
+.saas-cta-wrap [data-testid="stButton"] > button:active,
+.saas-cta-wrap [data-testid="stButton"] button:active {
+  transform: translateY(0);
+}
+
+.saas-sp-1 { height: 0.5rem; min-height: 0.5rem; flex-shrink: 0; overflow: hidden; }
+.saas-sp-2 { height: 0.75rem; min-height: 0.75rem; flex-shrink: 0; overflow: hidden; }
+.saas-sp-3 { height: 1rem; min-height: 1rem; flex-shrink: 0; overflow: hidden; }
+.saas-sp-4 { height: 1.5rem; min-height: 1.5rem; flex-shrink: 0; overflow: hidden; }
+
+/* ─── Section headers ───────────────────────────────────────── */
+.saas-sec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.saas-sec-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--saas-text-faint);
+  white-space: nowrap;
+}
+
+.saas-sec-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--saas-border), transparent);
+}
+
+/* ─── ATS centerpiece ───────────────────────────────────────── */
+.saas-ats {
+  position: relative;
+  text-align: center;
+  padding: 1.5rem 1.25rem;
+  margin-bottom: 0.25rem;
+  border-radius: var(--saas-radius-lg);
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  box-shadow: var(--saas-shadow);
+}
+
+.saas-ats-score {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--saas-text);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.saas-ats-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--saas-text-muted);
+}
+
+.saas-ats-verdict {
+  display: inline-block;
+  margin-top: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.saas-ats-verdict.excellent {
+  background: var(--saas-positive-bg);
+  color: var(--saas-positive);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.saas-ats-verdict.good {
+  background: var(--saas-warning-bg);
+  color: var(--saas-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.saas-ats-verdict.poor {
+  background: var(--saas-negative-bg);
+  color: var(--saas-negative);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ─── Metric cards ──────────────────────────────────────────── */
+.saas-mcard {
+  position: relative;
+  padding: 1rem 1rem;
+  border-radius: var(--saas-radius-md);
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  transition: border-color 0.15s ease;
+  overflow: hidden;
+}
+
+.saas-mcard:hover {
+  border-color: var(--saas-border-strong);
+}
+
+.saas-mcard::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  opacity: 0.9;
+}
+
+.saas-mcard-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--saas-text-faint);
+  margin-bottom: 0.35rem;
+}
+
+.saas-mcard-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--saas-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.saas-mcard-sub {
+  font-size: 11px;
+  color: var(--saas-text-faint);
+  margin-top: 0.25rem;
+}
+
+/* ─── AI panel ─────────────────────────────────────────────── */
+.saas-ai-panel {
+  border-radius: var(--saas-radius-lg);
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 0.25rem;
+  box-shadow: var(--saas-shadow);
+}
+
+.saas-ai-panel-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--saas-border);
+}
+
+.saas-ai-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--saas-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--saas-border);
+  font-size: 15px;
+}
+
+.saas-ai-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--saas-text);
+}
+
+.saas-ai-sub {
+  font-size: 12px;
+  color: var(--saas-text-muted);
+}
+
+.saas-ai-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--saas-text-secondary);
+}
+
+.saas-ai-body strong {
+  color: var(--saas-text);
+  font-weight: 600;
+}
+
+.saas-ai-block-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--saas-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.saas-ai-block {
+  margin-bottom: 0.85rem;
+}
+
+.saas-ai-block:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Chart empty state ─────────────────────────────────────── */
+.saas-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  max-height: 250px;
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  font-size: 13px;
+  color: var(--saas-text-muted);
+  border-radius: var(--saas-radius-md);
+  border: 1px solid var(--saas-border);
+  background: var(--saas-bg-raised);
+}
+
+/* ─── Skills ───────────────────────────────────────────────── */
+.saas-scard {
+  border-radius: var(--saas-radius-md);
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  padding: 1rem 1rem 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.saas-scard-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--saas-border);
+}
+
+.saas-scard-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--saas-text-secondary);
+}
+
+.saas-scard-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--saas-border);
+  color: var(--saas-text-muted);
+}
+
+.saas-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.saas-pill {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--saas-border);
+  color: var(--saas-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.saas-pill-ok {
+  border-color: rgba(34, 197, 94, 0.25);
+  color: var(--saas-positive);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.saas-pill-bad {
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--saas-negative);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+/* ─── Progress list ───────────────────────────────────────── */
+.saas-pcard {
+  border-radius: var(--saas-radius-md);
+  background: var(--saas-bg-raised);
+  border: 1px solid var(--saas-border);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.saas-pitem {
+  margin-bottom: 0.75rem;
+}
+
+.saas-pitem:last-child {
+  margin-bottom: 0;
+}
+
+.saas-phdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.saas-pname {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--saas-text-secondary);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  padding-right: 0.5rem;
+}
+
+.saas-pscore {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.saas-pscore-h {
+  background: var(--saas-positive-bg);
+  color: var(--saas-positive);
+}
+
+.saas-pscore-l {
+  background: var(--saas-negative-bg);
+  color: var(--saas-negative);
+}
+
+.saas-ptrack {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.saas-pfill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.saas-pfill-h {
+  background: #4ade80;
+}
+
+.saas-pfill-l {
+  background: #f87171;
+}
+
+/* ─── Recommendations & messages ──────────────────────────── */
+.saas-rcard {
+  border-radius: var(--saas-radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--saas-border);
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--saas-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.saas-rcard code {
+  font-size: 0.9em;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+  color: var(--saas-text-secondary);
+}
+
+.saas-empty {
+  border-radius: var(--saas-radius-md);
+  border: 1px dashed var(--saas-border-strong);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  font-size: 13px;
+  color: var(--saas-text-muted);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.saas-toast-ok {
+  border-radius: var(--saas-radius-md);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: var(--saas-positive-bg);
+  color: var(--saas-positive);
+  padding: 0.75rem 1rem;
+  font-size: 13px;
+}
+
+/* ─── Alerts (Streamlit) ───────────────────────────────────── */
+div[data-testid="stAlert"] {
+  border-radius: var(--saas-radius-md) !important;
+  font-size: 13px !important;
+  border: 1px solid var(--saas-border) !important;
+  background: var(--saas-bg-raised) !important;
+  color: var(--saas-text-secondary) !important;
+}
+
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span {
+  color: inherit !important;
+}
+
+/* ─── Plotly chart host ─────────────────────────────────────── */
+.js-plotly-plot .plotly .modebar {
+  display: none !important;
+}

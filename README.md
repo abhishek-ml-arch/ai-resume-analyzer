@@ -13,28 +13,18 @@ Analyze your resume against any job description using semantic AI matching and N
 - **Frontend:** Streamlit + Plotly
 - **AI Model:** all-MiniLM-L6-v2
 
-## Setup
+## Quick Start
 
 ```bash
-# 1. Clone and enter project
-git clone <your-repo-url>
-cd ai-resume-analyzer
+# One command to rule them all
+python start.py
 
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate        # Linux/Mac
-venv\Scripts\activate           # Windows
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run backend (in one terminal)
-cd backend
-uvicorn app:app --reload
-
-# 5. Run frontend (in another terminal)
-cd frontend
-streamlit run streamlit_app.py
+# That's it. The launcher handles:
+#   • Creating a Python virtual environment (if needed)
+#   • Installing all dependencies
+#   • Starting the backend (FastAPI on port 8000)
+#   • Starting the frontend (Streamlit on port 8501)
+#   • Streaming logs in real time
 ```
 
 ## Usage
@@ -47,3 +37,5 @@ streamlit run streamlit_app.py
 - Resume must be a text-based PDF (not a scanned image)
 - Maximum file size: 5MB
 - Backend runs on port 8000, frontend on port 8501
+- Press **Ctrl+C** to stop all services
+- Fully compatible with Arch Linux / CachyOS
